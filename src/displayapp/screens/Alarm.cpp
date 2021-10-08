@@ -22,156 +22,161 @@
 using namespace Pinetime::Applications::Screens;
 using Pinetime::Controllers::AlarmController;
 
-static void btnEventHandler(lv_obj_t* obj, lv_event_t event) {
+static void alarmEventHandler(lv_obj_t* obj, lv_event_t event) {
   Alarm* screen = static_cast<Alarm*>(obj->user_data);
-  screen->OnButtonEvent(obj, event);
+  screen->handleEvent(obj, event);
 }
 
 Alarm::Alarm(DisplayApp* app, Controllers::AlarmController& alarmController)
   : Screen(app), running {true}, alarmController {alarmController} {
 
-  time = lv_label_create(lv_scr_act(), nullptr);
-  lv_obj_set_style_local_text_font(time, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_76);
-  lv_obj_set_style_local_text_color(time, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GRAY);
+    lv_obj_t * colon = lv_label_create(lv_scr_act(), nullptr);
+    lv_obj_set_style_local_text_font(colon, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_76);
+    lv_obj_set_style_local_text_color(colon, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GRAY);
+    lv_label_set_text_static(colon, ":");
+    lv_obj_align(colon, lv_scr_act(), LV_ALIGN_CENTER, 0, -40);
 
-  alarmHours = alarmController.Hours();
-  alarmMinutes = alarmController.Minutes();
-  lv_label_set_text_fmt(time, "%02lu:%02lu", alarmHours, alarmMinutes);
+    btnHours = lv_btn_create(lv_scr_act(), nullptr);
+    btnHours->user_data = this;
+    lv_obj_set_event_cb(btnHours, alarmEventHandler);
+    lv_obj_set_size(btnHours, 100, 120);
+    txtHours = lv_label_create(btnHours, nullptr);
+    lv_obj_set_style_local_text_font(txtHours, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_76);
+    lv_obj_set_style_local_text_color(txtHours, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
+    lv_label_set_text_fmt(txtHours, "%02d", alarmHours);
+    lv_obj_align(btnHours, lv_scr_act(), LV_ALIGN_IN_LEFT_MID, 5, -40);
 
-  lv_obj_align(time, lv_scr_act(), LV_ALIGN_CENTER, 0, -25);
+    btnMin = lv_btn_create(lv_scr_act(), btnHours);
+    btnMin->user_data = this;
+    txtMin = lv_label_create(btnMin, txtHours);
+    lv_label_set_text_fmt(txtMin, "%02d", alarmMinutes);
+    lv_obj_align(btnMin, lv_scr_act(), LV_ALIGN_IN_RIGHT_MID, -5, -40);
 
-  btnHoursUp = lv_btn_create(lv_scr_act(), nullptr);
-  btnHoursUp->user_data = this;
-  lv_obj_set_event_cb(btnHoursUp, btnEventHandler);
-  lv_obj_set_size(btnHoursUp, 60, 40);
-  lv_obj_align(btnHoursUp, lv_scr_act(), LV_ALIGN_IN_LEFT_MID, 20, -85);
-  txtHrUp = lv_label_create(btnHoursUp, nullptr);
-  lv_label_set_text_static(txtHrUp, "+");
+    slider = lv_slider_create(lv_scr_act(), nullptr);
+    slider->user_data = this;
+    lv_obj_set_size(slider, 200, 20);
+    lv_obj_align(slider, nullptr, LV_ALIGN_CENTER, 0, 40);
+    lv_obj_set_event_cb(slider, alarmEventHandler);
+    lv_slider_set_anim_time(slider, 0);
+    lv_slider_set_range(slider, 0, 19);
 
-  btnHoursDown = lv_btn_create(lv_scr_act(), nullptr);
-  btnHoursDown->user_data = this;
-  lv_obj_set_event_cb(btnHoursDown, btnEventHandler);
-  lv_obj_set_size(btnHoursDown, 60, 40);
-  lv_obj_align(btnHoursDown, lv_scr_act(), LV_ALIGN_IN_LEFT_MID, 20, 35);
-  txtHrDown = lv_label_create(btnHoursDown, nullptr);
-  lv_label_set_text_static(txtHrDown, "-");
+    lv_style_t invisible;
+    lv_style_init(&invisible);
+    lv_style_set_value_opa(&invisible, LV_STATE_DEFAULT, 0);
+    lv_obj_add_style(slider, LV_SLIDER_PART_KNOB, &invisible);
+    lv_obj_add_style(slider, LV_SLIDER_PART_INDIC, &invisible);
 
-  btnMinutesUp = lv_btn_create(lv_scr_act(), nullptr);
-  btnMinutesUp->user_data = this;
-  lv_obj_set_event_cb(btnMinutesUp, btnEventHandler);
-  lv_obj_set_size(btnMinutesUp, 60, 40);
-  lv_obj_align(btnMinutesUp, lv_scr_act(), LV_ALIGN_IN_RIGHT_MID, -20, -85);
-  txtMinUp = lv_label_create(btnMinutesUp, nullptr);
-  lv_label_set_text_static(txtMinUp, "+");
+    btnAmPm = lv_btn_create(lv_scr_act(), nullptr);
+    btnAmPm->user_data = this;
+    lv_obj_set_size(btnAmPm, 115,50);
+    lv_obj_set_event_cb(btnAmPm, alarmEventHandler);
+    txtAmPm = lv_label_create(btnAmPm, nullptr);
+    lv_obj_align(btnAmPm, lv_scr_act(), LV_ALIGN_IN_BOTTOM_MID, 0, 0);
 
-  btnMinutesDown = lv_btn_create(lv_scr_act(), nullptr);
-  btnMinutesDown->user_data = this;
-  lv_obj_set_event_cb(btnMinutesDown, btnEventHandler);
-  lv_obj_set_size(btnMinutesDown, 60, 40);
-  lv_obj_align(btnMinutesDown, lv_scr_act(), LV_ALIGN_IN_RIGHT_MID, -20, 35);
-  txtMinDown = lv_label_create(btnMinutesDown, nullptr);
-  lv_label_set_text_static(txtMinDown, "-");
+    if (twelveHr) {
+      t12Hour = twentyFourToTwelve(alarmHours);
+    }
+    setHour();
 
-  btnEnable = lv_btn_create(lv_scr_act(), nullptr);
-  btnEnable->user_data = this;
-  lv_obj_set_event_cb(btnEnable, btnEventHandler);
-  lv_obj_set_size(btnEnable, 115, 50);
-  lv_obj_align(btnEnable, lv_scr_act(), LV_ALIGN_IN_BOTTOM_LEFT, 0, 0);
-  txtEnable = lv_label_create(btnEnable, nullptr);
-  SetEnableButtonState();
+}
 
-  btnRecur = lv_btn_create(lv_scr_act(), nullptr);
-  btnRecur->user_data = this;
-  lv_obj_set_event_cb(btnRecur, btnEventHandler);
-  lv_obj_set_size(btnRecur, 115, 50);
-  lv_obj_align(btnRecur, lv_scr_act(), LV_ALIGN_IN_BOTTOM_RIGHT, 0, 0);
-  txtRecur = lv_label_create(btnRecur, nullptr);
-  SetRecurButtonState();
+void Alarm::setHour() {
+   lv_obj_set_style_local_bg_color(btnHours, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLUE);
+   lv_obj_set_style_local_bg_color(btnMin, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GRAY);
+   if (twelveHr) {
+      if (t12Hour.IsPm) {
+         lv_label_set_text(txtAmPm, "PM");
+      } else {
+         lv_label_set_text(txtAmPm, "AM");
+      }
+   }
+   settingHour = true;
+}
 
-  btnInfo = lv_btn_create(lv_scr_act(), nullptr);
-  btnInfo->user_data = this;
-  lv_obj_set_event_cb(btnInfo, btnEventHandler);
-  lv_obj_set_size(btnInfo, 50, 40);
-  lv_obj_align(btnInfo, lv_scr_act(), LV_ALIGN_CENTER, 0, -85);
-  txtInfo = lv_label_create(btnInfo, nullptr);
-  lv_label_set_text_static(txtInfo, "i");
+void Alarm::setMin() {
+   lv_obj_set_style_local_bg_color(btnHours, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GRAY);
+   lv_obj_set_style_local_bg_color(btnMin, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLUE);
+   settingHour = false;
+}
+
+int16_t Alarm::twelveToTwentyFour(TwelveHourHr t12Hour) {
+   if (!t12Hour.IsPm && t12Hour.Hour == 12) {
+      return 0;
+   }
+   int16_t t24Hour = t12Hour.Hour;
+   if (t12Hour.IsPm) {
+      t24Hour += 12;
+   }
+   return t24Hour;
+}
+
+struct Alarm::TwelveHourHr Alarm::twentyFourToTwelve(int16_t t24Hour) {
+   TwelveHourHr t12Hour;
+   if (t24Hour < 12) {
+      t12Hour.Hour = (t24Hour == 0) ? 12 : t24Hour;
+      t12Hour.IsPm = false;
+   } else {
+      t12Hour.Hour = (t24Hour == 12) ? 12 : t24Hour + 12;
+      t12Hour.IsPm = true;
+   }
+   return t12Hour;
 }
 
 Alarm::~Alarm() {
   lv_obj_clean(lv_scr_act());
 }
 
-void Alarm::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
-  using Pinetime::Controllers::AlarmController;
-  if (event == LV_EVENT_CLICKED) {
-    if (obj == btnEnable) {
-      if (alarmController.State() == AlarmController::AlarmState::Alerting) {
-        alarmController.StopAlerting();
-      } else if (alarmController.State() == AlarmController::AlarmState::Set) {
-        alarmController.DisableAlarm();
-      } else {
-        alarmController.ScheduleAlarm();
+void Alarm::handleEvent(lv_obj_t * obj, lv_event_t event) {
+   if (obj == slider && event == LV_EVENT_PRESSING) {
+      if (lastSliderVal == -1) {
+         lastSliderVal = lv_slider_get_value(slider);
+         return;
       }
-      SetEnableButtonState();
-      return;
-    }
-    if (obj == btnInfo) {
-      ShowInfo();
-      return;
-    }
-    if (obj == btnMessage) {
-      lv_obj_del(txtMessage);
-      lv_obj_del(btnMessage);
-      txtMessage = nullptr;
-      btnMessage = nullptr;
-      return;
-    }
-    // If any other button was pressed, disable the alarm
-    // this is to make it clear that the alarm won't be set until it is turned back on
-    if (alarmController.State() == AlarmController::AlarmState::Set) {
-      alarmController.DisableAlarm();
-      SetEnableButtonState();
-    }
-    if (obj == btnMinutesUp) {
-      if (alarmMinutes >= 59) {
-        alarmMinutes = 0;
+      int16_t curVal = lv_slider_get_value(slider);
+      int16_t diff = curVal - lastSliderVal;
+      lastSliderVal = curVal;
+      if (settingHour) {
+         if (twelveHr) {
+            t12Hour.Hour += diff;
+            if (t12Hour.Hour > 12) {
+               t12Hour.Hour -= 12;
+            } else if (t12Hour.Hour < 1) {
+               t12Hour.Hour += 12;
+            }
+            alarmHours = twelveToTwentyFour(t12Hour);
+            lv_label_set_text_fmt(txtHours, "%02d", t12Hour.Hour);
+         } else {
+            alarmHours += diff;
+            if (alarmHours > 23) {
+               alarmHours -= 24;
+            } else if (alarmHours < 0) {
+               alarmHours += 24;
+            }
+            lv_label_set_text_fmt(txtHours, "%02d", alarmHours);
+         }
       } else {
-        alarmMinutes++;
+         alarmMinutes += diff;
+         if (alarmMinutes < 0) {
+            alarmMinutes += 60;
+         } else if (alarmMinutes > 59) {
+            alarmMinutes -= 60;
+         }
+         lv_label_set_text_fmt(txtMin, "%02d", alarmMinutes);
       }
-      UpdateAlarmTime();
-      return;
-    }
-    if (obj == btnMinutesDown) {
-      if (alarmMinutes == 0) {
-        alarmMinutes = 59;
+   } else if (obj == btnHours) {
+      setHour();
+   } else if (obj == btnMin) {
+      setMin();
+   } else if (obj == btnAmPm && event == LV_EVENT_PRESSED) {
+      if (t12Hour.IsPm) {
+         lv_label_set_text(txtAmPm, "AM");
+         t12Hour.IsPm = false;
       } else {
-        alarmMinutes--;
+         lv_label_set_text(txtAmPm, "PM");
+         t12Hour.IsPm = true;
       }
-      UpdateAlarmTime();
-      return;
-    }
-    if (obj == btnHoursUp) {
-      if (alarmHours >= 23) {
-        alarmHours = 0;
-      } else {
-        alarmHours++;
-      }
-      UpdateAlarmTime();
-      return;
-    }
-    if (obj == btnHoursDown) {
-      if (alarmHours == 0) {
-        alarmHours = 23;
-      } else {
-        alarmHours--;
-      }
-      UpdateAlarmTime();
-      return;
-    }
-    if (obj == btnRecur) {
-      ToggleRecurrence();
-    }
-  }
+      alarmHours = twelveToTwentyFour(t12Hour);
+   }
 }
 
 void Alarm::UpdateAlarmTime() {
@@ -202,12 +207,12 @@ void Alarm::SetEnableButtonState() {
 void Alarm::ShowInfo() {
   btnMessage = lv_btn_create(lv_scr_act(), nullptr);
   btnMessage->user_data = this;
-  lv_obj_set_event_cb(btnMessage, btnEventHandler);
+  lv_obj_set_event_cb(btnMessage, alarmEventHandler);
   lv_obj_set_height(btnMessage, 200);
   lv_obj_set_width(btnMessage, 150);
   lv_obj_align(btnMessage, lv_scr_act(), LV_ALIGN_CENTER, 0, 0);
   txtMessage = lv_label_create(btnMessage, nullptr);
-  lv_obj_set_style_local_bg_color(btnMessage, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_NAVY);
+  lv_obj_set_style_local_bg_color(btnMessage, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLUE);
 
   if (alarmController.State() == AlarmController::AlarmState::Set) {
     auto timeToAlarm = alarmController.SecondsToAlarm();

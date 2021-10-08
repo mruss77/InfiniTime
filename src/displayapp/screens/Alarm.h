@@ -30,12 +30,12 @@ namespace Pinetime {
         Alarm(DisplayApp* app, Controllers::AlarmController& alarmController);
         ~Alarm() override;
         void SetAlerting();
-        void OnButtonEvent(lv_obj_t* obj, lv_event_t event);
+        void handleEvent(lv_obj_t* obj, lv_event_t event);
 
       private:
         bool running;
-        uint8_t alarmHours;
-        uint8_t alarmMinutes;
+        int16_t alarmHours = 7;
+        int16_t alarmMinutes = 0;
         Controllers::AlarmController& alarmController;
 
         lv_obj_t *time, *btnEnable, *txtEnable, *btnMinutesUp, *btnMinutesDown, *btnHoursUp, *btnHoursDown, *txtMinUp, *txtMinDown,
@@ -48,6 +48,33 @@ namespace Pinetime {
         void ShowInfo();
         void ToggleRecurrence();
         void UpdateAlarmTime();
+        lv_obj_t * arc;
+        lv_obj_t * hour;
+
+
+        struct TwelveHourHr {
+          int16_t Hour;
+          bool IsPm;
+        };
+
+        void setHour();
+        void setMin();
+
+        int16_t twelveToTwentyFour(TwelveHourHr t12Hour);
+        TwelveHourHr twentyFourToTwelve(int16_t t24Hour);
+
+        lv_indev_t *kb_indev;
+        lv_obj_t * btnHours;
+        lv_obj_t * txtHours;
+        lv_obj_t * slider;
+        lv_obj_t * btnMin;
+        lv_obj_t * txtMin;
+        lv_obj_t * btnAmPm;
+        lv_obj_t * txtAmPm;
+        bool settingHour = true;
+        bool twelveHr = false;
+        TwelveHourHr t12Hour;
+        int16_t lastSliderVal = -1;
       };
     };
   };
