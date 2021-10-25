@@ -1,0 +1,44 @@
+/*  Copyright (C) 2021 mruss77, Florian
+
+    This file is part of InfiniTime.
+
+    InfiniTime is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published
+    by the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    InfiniTime is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+#include "TimeFormat.h"
+
+using namespace Pinetime::Applications::Screens;
+
+TimeFormat::TwelveHour TimeFormat::ToTwelveHour(uint8_t hour) {
+    TwelveHour t12Hr;
+    if (hour < 12) {
+        t12Hr.Hour = (hour == 0) ? 12 : hour;
+        t12Hr.IsPm = false;
+    } else { 
+        t12Hr.Hour = (hour == 12) ? 12 : hour - 12;
+        t12Hr.IsPm = true;
+    }
+    return t12Hr;
+}
+
+uint8_t TimeFormat::ToTwentyFourHour(TimeFormat::TwelveHour hour) {
+   if (!hour.IsPm && hour.Hour == 12) {
+      return 0;
+   }
+   uint8_t t24Hour = hour.Hour;
+   if (hour.IsPm && hour.Hour < 12) {
+      t24Hour += 12;
+   }
+   return t24Hour;
+}
+

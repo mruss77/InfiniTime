@@ -20,60 +20,44 @@
 #include <cstdint>
 #include "app_timer.h"
 #include "components/datetime/DateTimeController.h"
+#include <vector>
+#include <FreeRTOS.h>
+#include <timers.h>
 
 namespace Pinetime {
   namespace System {
     class SystemTask;
   }
   namespace Controllers {
-    class AlarmController {
+    class NewAlarmController {
     public:
-      AlarmController(Controllers::DateTime& dateTimeController);
-
+      NewAlarmController(Controllers::DateTime& dateTimeController, Controllers::Settings& settingsController);
       void Init(System::SystemTask* systemTask);
-      void SetAlarmTime(uint8_t alarmHr, uint8_t alarmMin);
-      void ScheduleAlarm();
-      void DisableAlarm();
-      void SetOffAlarmNow();
-      uint32_t SecondsToAlarm();
-      void StopAlerting();
-      enum class AlarmState { Not_Set, Set, Alerting };
-      enum class RecurType { None, Daily, Weekdays };
-      uint8_t Hours() const {
-        return hours;
-      }
-      uint8_t Minutes() const {
-        return minutes;
-      }
-      AlarmState State() const {
-        return state;
-      }
-      RecurType Recurrence() const {
-        return recurrence;
-      }
-      void SetRecurrence(RecurType recurType) {
-        recurrence = recurType;
-      }
+
+      enum class AlarmMode { Off, Once, Repeat };
 
       struct Alarm {
-        bool Enabled;
+        AlarmMode Mode;
         uint8_t Hour;
         uint8_t Minute;
-        bool Repeats;
         bool RepeatDays[7];
       };
+
+      Alarm GetAlarm(uint8_t index);
+      void SetAlarmTime(uint8_t index, uint8_t alarmHr, uint8_t alarmMin);
+      void SetAlarmMode(uint8_t index, AlarmMode mode);
+      void AddAlarm();
+      void DeleteAlarm(uint8_t index);
+      uint8_t AlarmCount();
+      bool TwelveHourFormat() const;
 
     private:
       Controllers::DateTime& dateTimeController;
       System::SystemTask* systemTask = nullptr;
-      uint8_t hours = 7;
-      uint8_t minutes = 0;
-      std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> alarmTime;
-      AlarmState state = AlarmState::Not_Set;
-      RecurType recurrence = RecurType::None;
-
-      uint8_t weekStartsOn;
-      const char dayNames[7][4] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+      std::vector<Alarm> alarms;
+      const uint8_t defaultAlarmHour = 7;
+      const uint8_t maxAlarms = 8;
+      TimerHandle_t timer;
     };
   }
 }

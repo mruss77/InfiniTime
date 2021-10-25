@@ -17,7 +17,7 @@
 */
 #pragma once
 
-#include "Screen.h"
+#include "../Screen.h"
 #include "systemtask/SystemTask.h"
 #include "../LittleVgl.h"
 #include "components/alarm/AlarmController.h"
@@ -25,10 +25,10 @@
 namespace Pinetime {
   namespace Applications {
     namespace Screens {
-      class Alarm : public Screen {
+      class SetAlarmTime : public Screen {
       public:
-        Alarm(DisplayApp* app, Controllers::AlarmController& alarmController);
-        ~Alarm() override;
+        SetAlarmTime(DisplayApp* app, Controllers::AlarmController& alarmController);
+        ~SetAlarmTime() override;
         void SetAlerting();
         void handleEvent(lv_obj_t* obj, lv_event_t event);
 
@@ -51,6 +51,7 @@ namespace Pinetime {
         lv_obj_t * arc;
         lv_obj_t * hour;
 
+
         struct TwelveHourHr {
           int16_t Hour;
           bool IsPm;
@@ -65,7 +66,7 @@ namespace Pinetime {
         lv_indev_t *kb_indev;
         lv_obj_t * btnHours;
         lv_obj_t * txtHours;
-        lv_obj_t * slider;
+        lv_obj_t * trackpad;
         lv_obj_t * btnMin;
         lv_obj_t * txtMin;
         lv_obj_t * btnAmPm;
@@ -73,7 +74,7 @@ namespace Pinetime {
         bool settingHour = true;
         bool twelveHr = false;
         TwelveHourHr t12Hour;
-        int16_t lastSliderVal = -1;
+        int16_t lastPadVal = -1;
       };
     };
   };
