@@ -82,7 +82,7 @@ void AlarmController::ScheduleAlarm() {
   alarmTime = std::chrono::system_clock::from_time_t(std::mktime(tmAlarmTime));
   auto mSecToAlarm = std::chrono::duration_cast<std::chrono::milliseconds>(alarmTime - now).count();
   app_timer_start(alarmAppTimer, APP_TIMER_TICKS(mSecToAlarm), this);
-
+  
   state = AlarmState::Set;
 }
 
@@ -93,6 +93,13 @@ uint32_t AlarmController::SecondsToAlarm() {
 void AlarmController::DisableAlarm() {
   app_timer_stop(alarmAppTimer);
   state = AlarmState::Not_Set;
+}
+
+void AlarmController::AdjustAlarm() {
+  // Called in response to a time change on the watch, to adjust the app timer if the alarm is set
+  if (state == AlarmState::Set) {
+    ScheduleAlarm();
+  }
 }
 
 void AlarmController::SetOffAlarmNow() {

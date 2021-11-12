@@ -279,8 +279,7 @@ void DisplayApp::Refresh() {
         LoadApp(Apps::FirmwareUpdate, DisplayApp::FullRefreshDirections::Down);
         break;
       case Messages::UpdateDateTime:
-        // Added to remove warning
-        // What should happen here?
+        alarmController.AdjustAlarm();
         break;
     }
   }
